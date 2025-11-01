@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ImageUpload } from "./ImageUpload";
 
 interface ProductDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
     unit: "piece",
     status: "active",
   });
+  const [images, setImages] = useState<string[]>([]);
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -48,6 +50,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         unit: product.unit || "piece",
         status: product.status || "active",
       });
+      setImages(product.images || []);
     } else {
       setFormData({
         name: "",
@@ -59,20 +62,116 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         unit: "piece",
         status: "active",
       });
+      setImages([]);
     }
   }, [product, open]);
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
+      // Validate images
+      if (!images || images.length === 0) {
+        throw new Error("At least one product image is required");
+      }
+      if (images.length > 4) {
+        throw new Error("Maximum 4 images allowed");
+      }
+
+      // Upload images to Supabase Storage
+      const uploadedUrls: string[] = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const imageUrl = images[i];
+        
+        // Skip if already a Supabase URL (existing image)
+        if (imageUrl.includes('supabase.co')) {
+          uploadedUrls.push(imageUrl);
+          continue;
+        }
+
+        // Convert blob URL to file
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const fileName = `${Date.now()}-${i}-${Math.random().toString(36).substring(7)}.jpg`;
+        const filePath = product?.id 
+          ? `${product.id}/${fileName}` 
+          : `temp/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, blob, {
+            contentType: blob.type,
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      const productData = { ...data, images: uploadedUrls };
+
       if (product) {
         const { error } = await supabase
           .from("products")
-          .update(data)
+          .update(productData)
           .eq("id", product.id);
         if (error) throw error;
+
+        // Delete old images if they were replaced
+        if (product.images) {
+          const oldUrls = product.images.filter((url: string) => !uploadedUrls.includes(url));
+          for (const oldUrl of oldUrls) {
+            const path = oldUrl.split('/product-images/')[1];
+            if (path) {
+              await supabase.storage.from('product-images').remove([path]);
+            }
+          }
+        }
       } else {
-        const { error } = await supabase.from("products").insert([data]);
+        const { data: newProduct, error } = await supabase
+          .from("products")
+          .insert([productData])
+          .select()
+          .single();
+        
         if (error) throw error;
+
+        // Move images from temp to product folder
+        if (newProduct) {
+          const finalUrls: string[] = [];
+          for (const url of uploadedUrls) {
+            if (url.includes('/temp/')) {
+              const fileName = url.split('/temp/')[1];
+              const oldPath = `temp/${fileName}`;
+              const newPath = `${newProduct.id}/${fileName}`;
+              
+              const { error: moveError } = await supabase.storage
+                .from('product-images')
+                .move(oldPath, newPath);
+
+              if (!moveError) {
+                const { data: { publicUrl } } = supabase.storage
+                  .from('product-images')
+                  .getPublicUrl(newPath);
+                finalUrls.push(publicUrl);
+              } else {
+                finalUrls.push(url);
+              }
+            } else {
+              finalUrls.push(url);
+            }
+          }
+
+          // Update product with final URLs
+          await supabase
+            .from("products")
+            .update({ images: finalUrls })
+            .eq("id", newProduct.id);
+        }
       }
     },
     onSuccess: () => {
@@ -127,6 +226,12 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               rows={3}
             />
           </div>
+
+          <ImageUpload
+            images={images}
+            onChange={setImages}
+            maxImages={4}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
