@@ -22,7 +22,8 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
 
   // Define allowed status transitions
   const allowedTransitions: Record<string, string[]> = {
-    pending: ["processing", "cancelled"],
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["processing", "cancelled"],
     processing: ["packed", "cancelled"],
     packed: ["shipped", "cancelled"],
     shipped: ["delivered", "cancelled"],
