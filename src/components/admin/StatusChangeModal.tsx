@@ -26,7 +26,8 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
     confirmed: ["processing", "cancelled"],
     processing: ["packed", "cancelled"],
     packed: ["shipped", "cancelled"],
-    shipped: ["delivered", "cancelled"],
+    shipped: ["out_for_delivery", "cancelled"],
+    out_for_delivery: ["delivered", "cancelled"],
     delivered: [],
     cancelled: [],
   };

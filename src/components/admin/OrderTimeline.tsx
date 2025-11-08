@@ -11,13 +11,15 @@ interface OrderTimelineProps {
 export function OrderTimeline({ status, createdAt, updatedAt, metadata }: OrderTimelineProps) {
   const statuses = [
     { key: "pending", label: "Order Placed", icon: CheckCircle2 },
-    { key: "processing", label: "Confirmed", icon: CheckCircle2 },
+    { key: "confirmed", label: "Confirmed", icon: CheckCircle2 },
+    { key: "processing", label: "Processing", icon: CheckCircle2 },
     { key: "packed", label: "Packed", icon: CheckCircle2 },
     { key: "shipped", label: "Shipped", icon: CheckCircle2 },
+    { key: "out_for_delivery", label: "Out for Delivery", icon: CheckCircle2 },
     { key: "delivered", label: "Delivered", icon: CheckCircle2 },
   ];
 
-  const statusOrder = ["pending", "processing", "packed", "shipped", "delivered"];
+  const statusOrder = ["pending", "confirmed", "processing", "packed", "shipped", "out_for_delivery", "delivered"];
   const currentIndex = statusOrder.indexOf(status);
   const isCancelled = status === "cancelled";
 

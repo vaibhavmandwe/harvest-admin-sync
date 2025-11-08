@@ -54,8 +54,11 @@ export function OrderDetailDrawer({ orderId, open, onOpenChange }: OrderDetailDr
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+      confirmed: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
       processing: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+      packed: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
       shipped: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+      out_for_delivery: "bg-violet-500/10 text-violet-500 border-violet-500/20",
       delivered: "bg-green-500/10 text-green-500 border-green-500/20",
       cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
     };
