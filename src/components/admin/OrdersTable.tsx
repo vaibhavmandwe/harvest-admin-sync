@@ -2,6 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface OrdersTableProps {
   orders: any[];
@@ -10,6 +14,62 @@ interface OrdersTableProps {
 }
 
 export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps) {
+  const queryClient = useQueryClient();
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ orderId, newStatus }: { orderId: string; newStatus: string }) => {
+      const order = orders.find(o => o.id === orderId);
+      
+      const statusHistory = {
+        ...(order.metadata?.status_history || {}),
+        [newStatus]: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: newStatus,
+          metadata: {
+            ...order.metadata,
+            status_history: statusHistory,
+            status_changes: [
+              ...(order.metadata?.status_changes || []),
+              {
+                from: order.status,
+                to: newStatus,
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          },
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Log activity
+      await supabase.from("activity_logs").insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        action: "ORDER_STATUS_UPDATED",
+        entity: {
+          order_id: orderId,
+          from: order.status,
+          to: newStatus,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Order status updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update order status");
+    },
+  });
+
+  const handleStatusChange = (orderId: string, newStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    statusMutation.mutate({ orderId, newStatus });
+  };
 
   if (isLoading) {
     return <div className="text-center py-8">Loading orders...</div>;
@@ -64,13 +124,26 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
             </TableCell>
             <TableCell className="font-semibold">${Number(order.amount).toFixed(2)}</TableCell>
             <TableCell className="uppercase text-sm">{order.payment_method}</TableCell>
-            <TableCell>
-              <Badge 
-                variant="outline" 
-                className={getStatusColor(order.status)}
+            <TableCell onClick={(e) => e.stopPropagation()}>
+              <Select 
+                value={order.status} 
+                onValueChange={(value) => handleStatusChange(order.id, value, {} as any)}
+                disabled={statusMutation.isPending || order.status === "delivered" || order.status === "cancelled"}
               >
-                {order.status}
-              </Badge>
+                <SelectTrigger className={`w-[160px] ${getStatusColor(order.status)}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="packed">Packed</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </TableCell>
             <TableCell className="text-sm text-muted-foreground">
               {new Date(order.created_at).toLocaleDateString()}
