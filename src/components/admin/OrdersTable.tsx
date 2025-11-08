@@ -66,8 +66,7 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
     },
   });
 
-  const handleStatusChange = (orderId: string, newStatus: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleStatusChange = (orderId: string, newStatus: string) => {
     statusMutation.mutate({ orderId, newStatus });
   };
 
@@ -92,6 +91,18 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
     };
     return colors[status] || "bg-secondary";
   };
+
+  const allowedTransitions: Record<string, string[]> = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["processing", "cancelled"],
+    processing: ["packed", "cancelled"],
+    packed: ["shipped", "cancelled"],
+    shipped: ["out_for_delivery", "cancelled"],
+    out_for_delivery: ["delivered", "cancelled"],
+    delivered: [],
+    cancelled: [],
+  };
+  const formatStatus = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <Table>
@@ -118,8 +129,8 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
             </TableCell>
             <TableCell>
               <div className="text-sm">
-                <div className="font-medium">{order.profiles?.name || "N/A"}</div>
-                <div className="text-muted-foreground text-xs">{order.profiles?.email}</div>
+                <div className="font-medium">{order.profiles?.name || order.shipping_address?.name || "N/A"}</div>
+                <div className="text-muted-foreground text-xs">{order.profiles?.email || order.shipping_address?.email}</div>
               </div>
             </TableCell>
             <TableCell className="font-semibold">${Number(order.amount).toFixed(2)}</TableCell>
@@ -127,21 +138,21 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
             <TableCell onClick={(e) => e.stopPropagation()}>
               <Select 
                 value={order.status} 
-                onValueChange={(value) => handleStatusChange(order.id, value, {} as any)}
+                onValueChange={(value) => handleStatusChange(order.id, value)}
                 disabled={statusMutation.isPending || order.status === "delivered" || order.status === "cancelled"}
               >
                 <SelectTrigger className={`w-[160px] ${getStatusColor(order.status)}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="packed">Packed</SelectItem>
-                  <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value={order.status} disabled>
+                    {formatStatus(order.status)}
+                  </SelectItem>
+                  {(allowedTransitions[order.status] || []).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {formatStatus(s)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </TableCell>
