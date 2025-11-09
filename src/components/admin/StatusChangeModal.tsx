@@ -26,10 +26,12 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
     confirmed: ["processing", "cancelled"],
     processing: ["packed", "cancelled"],
     packed: ["shipped", "cancelled"],
-    shipped: ["out_for_delivery", "cancelled"],
+    shipped: ["out_for_delivery", "delivered", "cancelled"],
     out_for_delivery: ["delivered", "cancelled"],
-    delivered: [],
-    cancelled: [],
+    delivered: ["returned"],
+    cancelled: ["refunded"],
+    returned: ["refunded"],
+    refunded: [],
   };
 
   const currentStatus = order?.status || "pending";
@@ -112,7 +114,7 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
     statusMutation.mutate({ status: newStatus, reason });
   };
 
-  const isTerminalStatus = currentStatus === "delivered" || currentStatus === "cancelled";
+  const isTerminalStatus = currentStatus === "refunded";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -58,7 +58,7 @@ export function OrderActions({ order, onStatusChange, onRefund }: OrderActionsPr
   };
 
   const canRefund = order.status !== "cancelled" && order.status !== "refunded";
-  const canChangeStatus = order.status !== "delivered" && order.status !== "cancelled";
+  const canChangeStatus = order.status !== "delivered" && order.status !== "cancelled" && order.status !== "refunded";
 
   return (
     <div className="space-y-4">
