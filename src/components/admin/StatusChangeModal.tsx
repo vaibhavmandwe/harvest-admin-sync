@@ -20,27 +20,27 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
 
-  // Define allowed status transitions
-  const allowedTransitions: Record<string, string[]> = {
-    pending: ["confirmed", "cancelled"],
-    confirmed: ["processing", "cancelled"],
-    processing: ["packed", "cancelled"],
-    packed: ["shipped", "cancelled"],
-    shipped: ["out_for_delivery", "delivered", "cancelled"],
-    out_for_delivery: ["delivered", "cancelled"],
-    delivered: ["returned"],
-    cancelled: ["refunded"],
-    returned: ["refunded"],
-    refunded: [],
-  };
+  // All valid statuses - admin can change to any status
+  const allStatuses = [
+    "pending",
+    "confirmed",
+    "processing",
+    "packed",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+    "cancelled",
+    "returned",
+    "refunded",
+  ];
 
   const currentStatus = order?.status || "pending";
-  const allowedNextStatuses = allowedTransitions[currentStatus] || [];
+  const availableStatuses = allStatuses.filter(s => s !== currentStatus);
 
   const statusMutation = useMutation({
     mutationFn: async ({ status, reason }: { status: string; reason: string }) => {
-      if (!allowedNextStatuses.includes(status)) {
-        throw new Error(`Cannot transition from ${currentStatus} to ${status}`);
+      if (!allStatuses.includes(status)) {
+        throw new Error(`Invalid status: ${status}`);
       }
 
       const statusHistory = {
@@ -101,8 +101,8 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
       return;
     }
 
-    if (!allowedNextStatuses.includes(newStatus)) {
-      toast.error(`Cannot change status from ${currentStatus} to ${newStatus}`);
+    if (!allStatuses.includes(newStatus)) {
+      toast.error(`Invalid status: ${newStatus}`);
       return;
     }
 
@@ -113,8 +113,6 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
 
     statusMutation.mutate({ status: newStatus, reason });
   };
-
-  const isTerminalStatus = currentStatus === "refunded";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,22 +125,15 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
           <div className="bg-muted/50 rounded-lg p-3">
             <p className="text-sm">
               <span className="text-muted-foreground">Current Status:</span>{" "}
-              <span className="font-medium capitalize">{currentStatus}</span>
+              <span className="font-medium capitalize">{currentStatus.replace(/_/g, " ")}</span>
             </p>
           </div>
 
-          {isTerminalStatus ? (
+          {availableStatuses.length === 0 ? (
             <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
               <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-yellow-600">
-                This order is in a terminal state ({currentStatus}). Status cannot be changed.
-              </p>
-            </div>
-          ) : allowedNextStatuses.length === 0 ? (
-            <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-              <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-yellow-600">
-                No status transitions available from the current state.
+                No other statuses available.
               </p>
             </div>
           ) : (
@@ -154,15 +145,15 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
                     <SelectValue placeholder="Select new status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allowedNextStatuses.map((status) => (
+                    {availableStatuses.map((status) => (
                       <SelectItem key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Allowed transitions: {allowedNextStatuses.map(s => s).join(", ")}
+                  Select any status to update the order
                 </p>
               </div>
 
@@ -188,7 +179,7 @@ export function StatusChangeModal({ open, onOpenChange, order }: StatusChangeMod
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={statusMutation.isPending || isTerminalStatus || allowedNextStatuses.length === 0}
+            disabled={statusMutation.isPending || availableStatuses.length === 0}
           >
             {statusMutation.isPending ? "Updating..." : "Update Status"}
           </Button>
