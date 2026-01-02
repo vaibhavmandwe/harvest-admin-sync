@@ -94,18 +94,18 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
     return colors[status] || "bg-secondary";
   };
 
-  const allowedTransitions: Record<string, string[]> = {
-    pending: ["confirmed", "cancelled"],
-    confirmed: ["processing", "cancelled"],
-    processing: ["packed", "cancelled"],
-    packed: ["shipped", "cancelled"],
-    shipped: ["out_for_delivery", "delivered", "cancelled"],
-    out_for_delivery: ["delivered", "cancelled"],
-    delivered: ["returned"],
-    cancelled: ["refunded"],
-    returned: ["refunded"],
-    refunded: [],
-  };
+  const allStatuses = [
+    "pending",
+    "confirmed",
+    "processing",
+    "packed",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+    "cancelled",
+    "returned",
+    "refunded",
+  ];
   const formatStatus = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
@@ -143,17 +143,14 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
               <Select 
                 value={order.status} 
                 onValueChange={(value) => handleStatusChange(order.id, value)}
-                disabled={statusMutation.isPending || order.status === "delivered" || order.status === "cancelled" || order.status === "refunded"}
+                disabled={statusMutation.isPending}
               >
                 <SelectTrigger className={`w-[160px] ${getStatusColor(order.status)}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={order.status} disabled>
-                    {formatStatus(order.status)}
-                  </SelectItem>
-                  {(allowedTransitions[order.status] || []).map((s) => (
-                    <SelectItem key={s} value={s}>
+                  {allStatuses.map((s) => (
+                    <SelectItem key={s} value={s} disabled={s === order.status}>
                       {formatStatus(s)}
                     </SelectItem>
                   ))}
