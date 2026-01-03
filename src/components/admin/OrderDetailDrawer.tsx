@@ -245,13 +245,34 @@ export function OrderDetailDrawer({ orderId, open, onOpenChange }: OrderDetailDr
                     Shipping Information
                   </h3>
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    {/* Delivery Contact */}
+                    <div>
+                      <p className="text-sm font-medium mb-1">Delivery Contact</p>
+                      {(() => {
+                        const addr = order.shipping_address as any;
+                        return (
+                          <div className="space-y-1">
+                            <p className="text-sm">{addr?.fullName || addr?.name || "N/A"}</p>
+                            {addr?.phone && (
+                              <a href={`tel:${addr.phone}`} className="text-sm flex items-center gap-2 text-primary hover:underline">
+                                <Phone className="h-3 w-3" />
+                                {addr.phone}
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <Separator />
+                    {/* Address */}
                     <div>
                       <p className="text-sm font-medium mb-1">Shipping Address</p>
                       {(() => {
                         const addr = order.shipping_address as any;
                         return (
                           <p className="text-sm text-muted-foreground">
-                            {addr?.street}, {addr?.city}, {addr?.state} {addr?.zip}<br />
+                            {addr?.addressLine1 || addr?.street}{addr?.addressLine2 ? `, ${addr.addressLine2}` : ''}<br />
+                            {addr?.city}, {addr?.state} {addr?.pincode || addr?.zip}<br />
                             {addr?.country || 'India'}
                           </p>
                         );
