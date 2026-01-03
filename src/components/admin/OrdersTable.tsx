@@ -133,8 +133,8 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
             </TableCell>
             <TableCell>
               <div className="text-sm">
-                <div className="font-medium">{order.profiles?.name || order.shipping_address?.name || "N/A"}</div>
-                <div className="text-muted-foreground text-xs">{order.profiles?.email || order.shipping_address?.email}</div>
+                <div className="font-medium">{order.shipping_address?.fullName || order.profiles?.name || "N/A"}</div>
+                <div className="text-muted-foreground text-xs">{order.shipping_address?.phone || "No phone"}</div>
               </div>
             </TableCell>
             <TableCell className="font-semibold">${Number(order.amount).toFixed(2)}</TableCell>
