@@ -29,6 +29,10 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
     status: "active",
   });
   const [images, setImages] = useState<string[]>([]);
+  const [inventoryData, setInventoryData] = useState({
+    initial_stock: "0",
+    reorder_threshold: "10",
+  });
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -63,6 +67,10 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         status: "active",
       });
       setImages([]);
+      setInventoryData({
+        initial_stock: "0",
+        reorder_threshold: "10",
+      });
     }
   }, [product, open]);
 
@@ -140,8 +148,23 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         
         if (error) throw error;
 
-        // Move images from temp to product folder
+        // Create inventory entry for the new product
         if (newProduct) {
+          const { error: inventoryError } = await supabase
+            .from("inventory")
+            .insert({
+              product_id: newProduct.id,
+              stock: parseInt(data.initial_stock) || 0,
+              reorder_threshold: parseInt(data.reorder_threshold) || 10,
+            });
+
+          if (inventoryError) {
+            // Rollback: delete the product if inventory creation fails
+            await supabase.from("products").delete().eq("id", newProduct.id);
+            throw new Error("Failed to create inventory. Product creation rolled back.");
+          }
+
+          // Move images from temp to product folder
           const finalUrls: string[] = [];
           for (const url of uploadedUrls) {
             if (url.includes('/temp/')) {
@@ -176,7 +199,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(product ? "Product updated!" : "Product created!");
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success(product ? "Product updated!" : "Product created with inventory!");
       onOpenChange(false);
     },
     onError: (error: any) => {
@@ -186,7 +210,11 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    mutation.mutate({
+      ...formData,
+      initial_stock: inventoryData.initial_stock,
+      reorder_threshold: inventoryData.reorder_threshold,
+    });
   };
 
   return (
@@ -310,6 +338,40 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </SelectContent>
             </Select>
           </div>
+
+          {/* Inventory Section - Only for new products */}
+          {!product && (
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium mb-3">Inventory Details</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="initial_stock">Initial Stock *</Label>
+                  <Input
+                    id="initial_stock"
+                    type="number"
+                    min="0"
+                    value={inventoryData.initial_stock}
+                    onChange={(e) => setInventoryData({ ...inventoryData, initial_stock: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reorder_threshold">Reorder Threshold</Label>
+                  <Input
+                    id="reorder_threshold"
+                    type="number"
+                    min="0"
+                    value={inventoryData.reorder_threshold}
+                    onChange={(e) => setInventoryData({ ...inventoryData, reorder_threshold: e.target.value })}
+                    placeholder="Default: 10"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Stock is required for orders. Reorder threshold triggers low stock alerts.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
