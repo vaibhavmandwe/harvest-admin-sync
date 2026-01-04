@@ -76,6 +76,9 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
+      // Extract inventory data (UI-only, not saved to products table)
+      const { initial_stock, reorder_threshold, ...productFields } = data;
+
       // Validate images
       if (!images || images.length === 0) {
         throw new Error("At least one product image is required");
@@ -120,7 +123,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         uploadedUrls.push(publicUrl);
       }
 
-      const productData = { ...data, images: uploadedUrls };
+      // Only product fields go to the products table (no inventory fields)
+      const productData = { ...productFields, images: uploadedUrls };
 
       if (product) {
         const { error } = await supabase
