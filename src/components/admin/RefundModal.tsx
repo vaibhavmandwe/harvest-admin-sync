@@ -107,15 +107,15 @@ export function RefundModal({ open, onOpenChange, order }: RefundModalProps) {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Original Amount</span>
-              <span className="font-medium">${Number(order?.amount || 0).toFixed(2)}</span>
+              <span className="font-medium">₹{Number(order?.amount || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Already Refunded</span>
-              <span className="font-medium">${(order?.metadata?.total_refunded || 0).toFixed(2)}</span>
+              <span className="font-medium">₹{(order?.metadata?.total_refunded || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm font-bold border-t pt-2">
               <span>Maximum Refundable</span>
-              <span className="text-primary">${maxRefundable.toFixed(2)}</span>
+              <span className="text-primary">₹{maxRefundable.toFixed(2)}</span>
             </div>
           </div>
 

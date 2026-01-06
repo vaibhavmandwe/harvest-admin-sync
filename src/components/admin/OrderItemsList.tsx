@@ -59,9 +59,9 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 
                   {/* Price */}
                   <div className="text-right">
-                    <p className="font-semibold">${itemTotal.toFixed(2)}</p>
+                    <p className="font-semibold">₹{itemTotal.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">
-                      ${item.unit_price.toFixed(2)} × {item.qty}
+                      ₹{item.unit_price.toFixed(2)}{item.products.unit ? ` / ${item.products.unit}` : ""} × {item.qty}
                     </p>
                   </div>
                 </div>

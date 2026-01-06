@@ -285,18 +285,23 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unit">Unit</Label>
+              <Label htmlFor="unit">Unit *</Label>
               <Select
                 value={formData.unit}
                 onValueChange={(value) => setFormData({ ...formData, unit: value })}
+                required
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                  <SelectItem value="gram">Gram (g)</SelectItem>
+                  <SelectItem value="liter">Liter (L)</SelectItem>
+                  <SelectItem value="ml">Milliliter (ml)</SelectItem>
                   <SelectItem value="piece">Piece</SelectItem>
-                  <SelectItem value="kg">Kilogram</SelectItem>
-                  <SelectItem value="liter">Liter</SelectItem>
+                  <SelectItem value="packet">Packet</SelectItem>
+                  <SelectItem value="dozen">Dozen</SelectItem>
                   <SelectItem value="pack">Pack</SelectItem>
                 </SelectContent>
               </Select>
@@ -305,15 +310,19 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="price">Price *</Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
+                min="0.01"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                This price will be shown as price per selected unit (e.g., ₹{formData.price || "0"} / {formData.unit})
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="mrp">MRP</Label>
@@ -321,6 +330,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
                 id="mrp"
                 type="number"
                 step="0.01"
+                min="0"
                 value={formData.mrp}
                 onChange={(e) => setFormData({ ...formData, mrp: e.target.value })}
               />

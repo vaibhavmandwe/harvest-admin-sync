@@ -45,7 +45,7 @@ export default function Dashboard() {
     },
     {
       title: "Total Revenue",
-      value: `$${(stats?.revenue || 0).toFixed(2)}`,
+      value: `₹${(stats?.revenue || 0).toFixed(2)}`,
       icon: DollarSign,
       color: "text-orange-600",
     },

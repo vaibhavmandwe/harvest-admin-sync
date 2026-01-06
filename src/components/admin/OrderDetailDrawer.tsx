@@ -108,7 +108,7 @@ export function OrderDetailDrawer({ orderId, open, onOpenChange }: OrderDetailDr
                     {order.status}
                   </Badge>
                 </div>
-                <div className="text-2xl font-bold">${Number(order.amount).toFixed(2)}</div>
+                <div className="text-2xl font-bold">₹{Number(order.amount).toFixed(2)}</div>
               </div>
             ) : null}
           </DrawerHeader>
@@ -179,30 +179,30 @@ export function OrderDetailDrawer({ orderId, open, onOpenChange }: OrderDetailDr
                         <>
                           <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>${totals.subtotal.toFixed(2)}</span>
+                            <span>₹{totals.subtotal.toFixed(2)}</span>
                           </div>
                           {totals.discount > 0 && (
                             <div className="flex justify-between text-sm text-green-600">
                               <span>Discount</span>
-                              <span>-${totals.discount.toFixed(2)}</span>
+                              <span>-₹{totals.discount.toFixed(2)}</span>
                             </div>
                           )}
                           {totals.tax > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Tax</span>
-                              <span>${totals.tax.toFixed(2)}</span>
+                              <span>₹{totals.tax.toFixed(2)}</span>
                             </div>
                           )}
                           {totals.shipping > 0 && (
                             <div className="flex justify-between text-sm">
                               <span>Shipping</span>
-                              <span>${totals.shipping.toFixed(2)}</span>
+                              <span>₹{totals.shipping.toFixed(2)}</span>
                             </div>
                           )}
                           <Separator />
                           <div className="flex justify-between font-bold text-lg">
                             <span>Grand Total</span>
-                            <span>${totals.total.toFixed(2)}</span>
+                            <span>₹{totals.total.toFixed(2)}</span>
                           </div>
                         </>
                       );
