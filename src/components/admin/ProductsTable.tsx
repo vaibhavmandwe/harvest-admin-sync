@@ -44,7 +44,7 @@ export function ProductsTable({ products, isLoading, onEdit }: ProductsTableProp
           <TableHead>Name</TableHead>
           <TableHead>SKU</TableHead>
           <TableHead>Category</TableHead>
-          <TableHead>Price</TableHead>
+          <TableHead>Price / Unit</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -55,7 +55,7 @@ export function ProductsTable({ products, isLoading, onEdit }: ProductsTableProp
             <TableCell className="font-medium">{product.name}</TableCell>
             <TableCell>{product.sku}</TableCell>
             <TableCell>{product.categories?.name || "N/A"}</TableCell>
-            <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+            <TableCell>₹{Number(product.price).toFixed(2)}{product.unit ? ` / ${product.unit}` : ""}</TableCell>
             <TableCell>
               <Badge variant={product.status === "active" ? "default" : "secondary"}>
                 {product.status}

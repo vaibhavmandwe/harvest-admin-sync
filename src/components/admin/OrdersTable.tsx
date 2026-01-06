@@ -137,7 +137,7 @@ export function OrdersTable({ orders, isLoading, onViewOrder }: OrdersTableProps
                 <div className="text-muted-foreground text-xs">{order.shipping_address?.phone || "No phone"}</div>
               </div>
             </TableCell>
-            <TableCell className="font-semibold">${Number(order.amount).toFixed(2)}</TableCell>
+            <TableCell className="font-semibold">₹{Number(order.amount).toFixed(2)}</TableCell>
             <TableCell className="uppercase text-sm">{order.payment_method}</TableCell>
             <TableCell onClick={(e) => e.stopPropagation()}>
               <Select 
